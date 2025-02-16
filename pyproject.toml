@@ -1,0 +1,12 @@
+[project]
+name = "giftvouchermaker"
+version = "0.1.0"
+description = "This makes PPTX gift voucher slides"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ipykernel>=6.29.5",
+    "ipython>=8.32.0",
+    "python-pptx>=1.0.2",
+    "qrcode>=8.0",
+]
