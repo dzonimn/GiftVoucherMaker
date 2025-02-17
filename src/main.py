@@ -1,7 +1,8 @@
-from pptx import Presentation
-import qrcode
-import csv
 import os
+
+import polars as pl
+import qrcode
+from pptx import Presentation
 
 from misc import (
     delete_slide,
@@ -20,26 +21,15 @@ def find_and_return_shape(slide, text):
 
 
 if __name__ == "__main__":
-    voucher_codes = []
-    voucher_links = []
-    with open(
-        "Hari Raya Vouchers.csv",
-    ) as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            # Skip the first line
-            if reader.line_num == 1:
-                continue
-            # Otherwise, store the code and link
-            voucher_code, voucher_link = row
-            voucher_codes.append(voucher_code)
-            voucher_links.append(voucher_link)
+    data = pl.scan_csv("./Hari Raya Vouchers.csv")
+    data = data.select(["Voucher Code", "Voucher Link", "Name"]).collect()
 
-    prs = Presentation("./template_hariraya.pptx")
-    for code, link in zip(voucher_codes, voucher_links):
+    prs = Presentation("./Hari Raya Vouchers.pptx")
+    for code, link, name in data.iter_rows():
         current_slide = duplicate_slide(prs, 0)
         code_shape = find_and_return_shape(current_slide, "Voucher Code")
         link_shape = find_and_return_shape(current_slide, "Voucher Link")
+        name_shape = find_and_return_shape(current_slide, "NAME")
         qrcode_shape = find_and_return_shape(current_slide, "QR Code\n\n")
 
         replace_paragraph_text_retaining_initial_formatting(
@@ -47,6 +37,9 @@ if __name__ == "__main__":
         )
         replace_paragraph_text_retaining_initial_formatting(
             link_shape.text_frame.paragraphs[0], link
+        )
+        replace_paragraph_text_retaining_initial_formatting(
+            name_shape.text_frame.paragraphs[0], name
         )
         qrcode.make(code).save("qrcode.png")
         current_slide.shapes.add_picture(
